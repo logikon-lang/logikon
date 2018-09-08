@@ -1,12 +1,14 @@
 contract = { soi ~ (state_var_decl)* ~ (function_def)* ~ eoi }
 
-function_def = { "define" ~ recursive? ~ identifier ~ type_list ~ "->" ~ type_list ~ (case)+ }
+function_def = { "define" ~ recursive? ~ identifier ~ type_list ~ "->" ~ logikon_type ~ (case)+ }
 
 type_list = { "(" ~ (logikon_type)* ~ ")" }
 
 recursive = @ { "recursive" }
 
-case = { "case" ~ parameter_list ~ parameter_list ~ case_body? ~ "." }
+case = { "case" ~ parameter_list ~ return_value ~ case_body? ~ "." }
+
+return_value = { identifier | "_" }
 
 parameter_list = { "(" ~ (array_param | uint_param | list_param)* ~ ")" }
 

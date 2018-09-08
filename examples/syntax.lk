@@ -1,37 +1,36 @@
 declare balance Array.
 declare owner Uint.
 
-define sum (Uint Uint) -> (Uint)
-case (1 1) (2).
-case (X Y) (Z) :-
+define sum (Uint Uint) -> Uint
+case (X Y) Z :-
     (= Z (+ X Y)).
 
-define double (Uint) -> (Uint)
-case (X) (D) :-
+define double (Uint) -> Uint
+case (X) D :-
     (= D (sum X X)).
 
-define triple (Uint) -> (Uint)
-case (X) (T) :-
+define triple (Uint) -> Uint
+case (X) T :-
     (= D (ssum X X))
     (= T (ssum X D)).
 
-define recursive min (List) -> (Uint)
-case ([X]) (X).
-case ([H:T*]) (X) :-
+define recursive min (List) -> Uint
+case ([X]) X.
+case ([H:T*]) X :-
     (= Y (min T))
     (= X (ite (< H Y) H Y)).
 
-define f (Uint Uint Uint) -> (Bool)
-case (a b c) () :-
+define f (Uint Uint Uint) -> Bool
+case (a b c) _ :-
 	(> a b)
 	(> a c).
 
-define g (Array Uint) -> (Bool)
-case ({a} b) () :- 
+define g (Array Uint) -> Bool
+case ({a} b) _ :- 
 	(f (f (and a b))).
 
-define transfer (Uint Uint) -> (Bool)
-case (To Amount) () :-
+define transfer (Uint Uint) -> Bool
+case (To Amount) _ :-
     (= FromBalance (select Balance Sender))
     (>= FromBalance Amount)
     (= ToBalance (select Balance To))

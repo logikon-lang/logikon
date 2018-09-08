@@ -20,11 +20,11 @@ struct Function {
     signature: Signature,
 }
 
-#[derive(Hash, PartialEq, Debug)]
+#[derive(Hash, PartialEq, Debug, Clone)]
 struct Case {
     parameters: Vec<Variable>, // TODO implement patterns
     expressions: Vec<BooleanExpression>,
-    return_values: Vec<Variable>,
+    return_value: Variable,
 }
 
 #[derive(Hash, PartialEq, Debug, Clone)]
@@ -86,7 +86,7 @@ enum ArrayExpression {
     ),
 }
 
-#[derive(Hash, PartialEq, Debug)]
+#[derive(Hash, PartialEq, Debug, Clone)]
 struct Variable {
     name: String,
     _type: Type,
@@ -104,7 +104,7 @@ enum Type {
 #[derive(Hash, PartialEq, Debug)]
 struct Signature {
     inputs: Vec<Type>,
-    outputs: Vec<Type>,
+    output: Type,
 }
 
 // impl<'a> From<Pair<'a, Rule>> for Parameter {
@@ -145,9 +145,7 @@ impl<'a> Function {
         let mut cases: Vec<Case> = vec![];
         let mut recursive = false;
         let mut inputs = vec![];
-        let mut outputs = vec![];
-
-        let mut parsed_input_types = false;
+        let mut output = Type::Unknown;
 
         for p in pair.into_inner() {
             match p.as_rule() {
@@ -161,48 +159,34 @@ impl<'a> Function {
                     recursive = true;
                 }
                 Rule::type_list => {
-                    if parsed_input_types {
-                        for t in p.into_inner() {
-                            outputs.push(Type::from(t))
-                        }
-                    } else {
-                        for t in p.into_inner() {
-                            inputs.push(Type::from(t))
-                        }
-                        parsed_input_types = true;
+                    for t in p.into_inner() {
+                        inputs.push(Type::from(t))
                     }
+                }
+                Rule::logikon_type => {
+                    output = Type::from(p);
                 }
                 c => panic!("{:?}", c),
             }
         }
 
-        let cases = cases
-            .iter()
-            .map(|c| Case {
-                parameters: c
-                    .parameters
-                    .iter()
-                    .enumerate()
-                    .map(|(index, v)| Variable {
-                        _type: inputs[index].clone(),
-                        name: v.name.clone(),
-                    }).collect(),
-                return_values: c
-                    .return_values
-                    .iter()
-                    .enumerate()
-                    .map(|(index, v)| Variable {
-                        _type: outputs[index].clone(),
-                        name: v.name.clone(),
-                    }).collect(),
-                expressions: c.expressions.clone(),
-            }).collect();
+        let cases = cases.iter().map(|c| Case {
+            parameters: c.parameters.iter().enumerate().map(|(index, v)| Variable {
+                _type: inputs[index].clone(),
+                name: v.name.clone(),
+            }).collect(),
+            return_value: Variable {
+                _type: output.clone(),
+                name: c.return_value.name.clone()
+            },
+            expressions: c.expressions.clone()
+        }).collect();
 
         Function {
             name,
             recursive,
             cases,
-            signature: Signature { inputs, outputs },
+            signature: Signature { inputs, output },
         }
     }
 }
@@ -380,23 +364,17 @@ impl<'a> BooleanExpression {
 impl<'a> Case {
     fn from(pair: Pair<Rule>, symbols: HashMap<String, Type>) -> Case {
         let mut parameters = vec![];
-        let mut return_values = vec![];
+        let mut return_value = Variable { name: String::new(), _type: Type::Unknown };
         let mut expressions = vec![];
-
-        let mut parsed_parameters = false;
 
         for p in pair.into_inner() {
             match p.as_rule() {
+                Rule::return_value => {
+                    return_value = Variable::from(p);
+                }
                 Rule::parameter_list => {
-                    if parsed_parameters {
-                        for t in p.into_inner() {
-                            return_values.push(Variable::from(t))
-                        }
-                    } else {
-                        for t in p.into_inner() {
-                            parameters.push(Variable::from(t))
-                        }
-                        parsed_parameters = true;
+                    for t in p.into_inner() {
+                        parameters.push(Variable::from(t))
                     }
                 }
                 Rule::case_body => {
@@ -411,7 +389,7 @@ impl<'a> Case {
         Case {
             parameters,
             expressions,
-            return_values,
+            return_value,
         }
     }
 }
@@ -432,8 +410,8 @@ mod tests {
 
     #[test]
     fn empty_function() {
-        let source = r#"define f (Uint) -> (Uint Uint) 
-		case () ().
+        let source = r#"define f (Uint) -> Uint
+		case () _.
 	"#;
 
         let mut pairs = ContractParser::parse(Rule::function_def, &source).unwrap();
@@ -448,11 +426,11 @@ mod tests {
                 cases: vec![Case {
                     parameters: vec![],
                     expressions: vec![],
-                    return_values: vec![]
+                    return_value: Variable { name: String::from("_"), _type: Type::Uint }
                 }],
                 signature: Signature {
                     inputs: vec![Type::Uint],
-                    outputs: vec![Type::Uint, Type::Uint]
+                    output: Type::Uint
                 }
             }
         );
@@ -460,8 +438,8 @@ mod tests {
 
     #[test]
     fn identity_function() {
-        let source = r#"define f (Bool) -> (Bool) 
-        case (a) (x) :-
+        let source = r#"define f (Bool) -> Bool 
+        case (a) x :-
             (= x y).
     "#;
 
@@ -483,14 +461,14 @@ mod tests {
                         Box::new(BooleanExpression::Identifier(String::from("x"))),
                         Box::new(BooleanExpression::Identifier(String::from("y")))
                     )],
-                    return_values: vec![Variable {
+                    return_value: Variable {
                         name: String::from("x"),
                         _type: Type::Bool
-                    }]
+                    }
                 }],
                 signature: Signature {
                     inputs: vec![Type::Bool],
-                    outputs: vec![Type::Bool]
+                    output: Type::Bool
                 }
             }
         );
@@ -498,8 +476,8 @@ mod tests {
 
     #[test]
     fn ite_function() {
-        let source = r#"define f (Bool) -> (Bool) 
-        case (a) (x) :-
+        let source = r#"define f (Bool) -> Bool 
+        case (a) x :-
             (= x (ite a a a)).
     "#;
 
@@ -525,14 +503,14 @@ mod tests {
                             Box::new(BooleanExpression::Identifier(String::from("a"))),
                         ))
                     )],
-                    return_values: vec![Variable {
+                    return_value: Variable {
                         name: String::from("x"),
                         _type: Type::Bool
-                    }]
+                    }
                 }],
                 signature: Signature {
                     inputs: vec![Type::Bool],
-                    outputs: vec![Type::Bool]
+                    output: Type::Bool
                 }
             }
         );
@@ -540,8 +518,8 @@ mod tests {
 
     #[test]
     fn ite_uint_function() {
-        let source = r#"define f (Uint Bool) -> (Uint)
-        case (a b) (x) :-
+        let source = r#"define f (Uint Bool) -> Uint
+        case (a b) x :-
             (= x (ite b a a)).
     "#;
 
@@ -573,14 +551,14 @@ mod tests {
                             Box::new(UintExpression::Identifier(String::from("a"))),
                         ))
                     )],
-                    return_values: vec![Variable {
+                    return_value: Variable {
                         name: String::from("x"),
                         _type: Type::Uint
-                    }]
+                    }
                 }],
                 signature: Signature {
                     inputs: vec![Type::Uint, Type::Bool],
-                    outputs: vec![Type::Uint]
+                    output: Type::Uint
                 }
             }
         );
