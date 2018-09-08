@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 #[derive(Hash, PartialEq, Debug)]
 struct Contract {
     state: Vec<StateVariable>,
@@ -71,14 +73,17 @@ enum UintExpression {
         Box<UintExpression>,
     ),
 
-
     Select(Box<ArrayExpression>, Box<UintExpression>),
 }
 
 #[derive(Hash, PartialEq, Debug, Clone)]
 enum ArrayExpression {
     Identifier(String),
-    Store(Box<ArrayExpression>, Box<UintExpression>, Box<UintExpression>),
+    Store(
+        Box<ArrayExpression>,
+        Box<UintExpression>,
+        Box<UintExpression>,
+    ),
 }
 
 #[derive(Hash, PartialEq, Debug)]
@@ -119,24 +124,22 @@ struct Signature {
 // 	}
 // }
 
-impl<'a> From<Pair<'a, Rule>> for Type {
+impl<'a> Type {
     fn from(pair: Pair<Rule>) -> Type {
         match pair.as_rule() {
-            Rule::logikon_type => {
-                match pair.as_str() {
-                    "Uint" => Type::Uint,
-                    "Bool" => Type::Bool,
-                    "List" => Type::List,
-                    "Array" => Type::Array,
-                    _ => panic!("die"),
-                }
-            }
+            Rule::logikon_type => match pair.as_str() {
+                "Uint" => Type::Uint,
+                "Bool" => Type::Bool,
+                "List" => Type::List,
+                "Array" => Type::Array,
+                _ => panic!("die"),
+            },
             _ => panic!("not a type"),
         }
     }
 }
 
-impl<'a> From<Pair<'a, Rule>> for Function {
+impl<'a> Function {
     fn from(pair: Pair<Rule>) -> Function {
         let mut name = String::new();
         let mut cases: Vec<Case> = vec![];
@@ -152,7 +155,7 @@ impl<'a> From<Pair<'a, Rule>> for Function {
                     name = p.as_str().to_string();
                 }
                 Rule::case => {
-                    cases.push(Case::from(p));
+                    cases.push(Case::from(p, HashMap::new()));
                 }
                 Rule::recursive => {
                     recursive = true;
@@ -173,17 +176,27 @@ impl<'a> From<Pair<'a, Rule>> for Function {
             }
         }
 
-        let cases = cases.iter().map(|c| Case {
-            parameters: c.parameters.iter().enumerate().map(|(index, v)| Variable {
-                _type: inputs[index].clone(),
-                name: v.name.clone(),
-            }).collect(),
-            return_values: c.return_values.iter().enumerate().map(|(index, v)| Variable {
-                _type: outputs[index].clone(),
-                name: v.name.clone(),
-            }).collect(),
-            expressions: c.expressions.clone()
-        }).collect();
+        let cases = cases
+            .iter()
+            .map(|c| Case {
+                parameters: c
+                    .parameters
+                    .iter()
+                    .enumerate()
+                    .map(|(index, v)| Variable {
+                        _type: inputs[index].clone(),
+                        name: v.name.clone(),
+                    }).collect(),
+                return_values: c
+                    .return_values
+                    .iter()
+                    .enumerate()
+                    .map(|(index, v)| Variable {
+                        _type: outputs[index].clone(),
+                        name: v.name.clone(),
+                    }).collect(),
+                expressions: c.expressions.clone(),
+            }).collect();
 
         Function {
             name,
@@ -194,7 +207,7 @@ impl<'a> From<Pair<'a, Rule>> for Function {
     }
 }
 
-impl<'a> From<Pair<'a, Rule>> for Variable {
+impl<'a> Variable {
     fn from(pair: Pair<Rule>) -> Variable {
         Variable {
             name: String::from(pair.as_str()),
@@ -203,7 +216,7 @@ impl<'a> From<Pair<'a, Rule>> for Variable {
     }
 }
 
-impl<'a> From<Pair<'a, Rule>> for UintExpression {
+impl<'a> UintExpression {
     fn from(pair: Pair<Rule>) -> UintExpression {
         let mut arg_count = 0;
 
@@ -212,6 +225,8 @@ impl<'a> From<Pair<'a, Rule>> for UintExpression {
         let op = token_iter.next().unwrap();
 
         match op.as_rule() {
+            Rule::identifier => UintExpression::Identifier(String::from(op.as_str())),
+            Rule::statement => UintExpression::from(op),
             Rule::function_identifier => panic!(""),
             Rule::binary_op => {
                 let argument1 = token_iter.next().unwrap();
@@ -260,13 +275,13 @@ impl<'a> From<Pair<'a, Rule>> for UintExpression {
     }
 }
 
-impl<'a> From<Pair<'a, Rule>> for Expression {
+impl<'a> Expression {
     fn from(pair: Pair<Rule>) -> Expression {
         Expression::Boolean(BooleanExpression::Identifier(String::from("lol")))
     }
 }
 
-impl<'a> From<Pair<'a, Rule>> for ArrayExpression {
+impl<'a> ArrayExpression {
     fn from(pair: Pair<Rule>) -> ArrayExpression {
         let mut token_iter = pair.into_inner();
 
@@ -280,28 +295,29 @@ impl<'a> From<Pair<'a, Rule>> for ArrayExpression {
                 let argument3 = token_iter.next().unwrap();
 
                 match op.as_str() {
-                    "store" => ArrayExpression::Store(Box::new(ArrayExpression::from(argument1)),
-                                                        Box::new(UintExpression::from(argument2)),
-                                                        Box::new(UintExpression::from(argument3))
-                                                        ),
+                    "store" => ArrayExpression::Store(
+                        Box::new(ArrayExpression::from(argument1)),
+                        Box::new(UintExpression::from(argument2)),
+                        Box::new(UintExpression::from(argument3)),
+                    ),
                     _ => panic!(""),
                 }
-            },
+            }
             _ => panic!(""),
         }
     }
 }
 
-impl<'a> From<Pair<'a, Rule>> for BooleanExpression {
+impl<'a> BooleanExpression {
     fn from(pair: Pair<Rule>) -> BooleanExpression {
-        let mut arg_count = 0;
-
         let mut token_iter = pair.into_inner();
 
         let op = token_iter.next().unwrap();
 
         match op.as_rule() {
-            Rule::function_identifier => panic!(""),
+            Rule::statement => BooleanExpression::from(op),
+            Rule::identifier => BooleanExpression::Identifier(String::from(op.as_str())),
+            Rule::function_identifier => panic!("NO FUNCTIONS"),
             Rule::unary_op => {
                 let argument = token_iter.next().unwrap();
                 match op.as_str() {
@@ -356,13 +372,13 @@ impl<'a> From<Pair<'a, Rule>> for BooleanExpression {
                     _ => panic!(""),
                 }
             }
-            _ => panic!(""),
+            e => panic!("{:?}", e),
         }
     }
 }
 
-impl<'a> From<Pair<'a, Rule>> for Case {
-    fn from(pair: Pair<Rule>) -> Case {
+impl<'a> Case {
+    fn from(pair: Pair<Rule>, symbols: HashMap<String, Type>) -> Case {
         let mut parameters = vec![];
         let mut return_values = vec![];
         let mut expressions = vec![];
@@ -463,13 +479,9 @@ mod tests {
                         name: String::from("a"),
                         _type: Type::Bool
                     }],
-                    expressions: vec![BooleanExpression::Eq(
-                        Box::new(Expression::Boolean(BooleanExpression::Identifier(
-                            String::from("x")
-                        ))),
-                        Box::new(Expression::Boolean(BooleanExpression::Identifier(
-                            String::from("y")
-                        )))
+                    expressions: vec![BooleanExpression::EqBool(
+                        Box::new(BooleanExpression::Identifier(String::from("x"))),
+                        Box::new(BooleanExpression::Identifier(String::from("y")))
                     )],
                     return_values: vec![Variable {
                         name: String::from("x"),
@@ -505,15 +517,13 @@ mod tests {
                         name: String::from("a"),
                         _type: Type::Bool
                     }],
-                    expressions: vec![BooleanExpression::Eq(
-                        Box::new(Expression::Boolean(BooleanExpression::Identifier(
-                            String::from("x")
-                        ))),
-                        Box::new(Expression::Boolean(BooleanExpression::Ite(
+                    expressions: vec![BooleanExpression::EqBool(
+                        Box::new(BooleanExpression::Identifier(String::from("x"))),
+                        Box::new(BooleanExpression::Ite(
                             Box::new(BooleanExpression::Identifier(String::from("a"))),
                             Box::new(BooleanExpression::Identifier(String::from("a"))),
                             Box::new(BooleanExpression::Identifier(String::from("a"))),
-                        )))
+                        ))
                     )],
                     return_values: vec![Variable {
                         name: String::from("x"),
@@ -545,22 +555,23 @@ mod tests {
                 name: String::from("f"),
                 recursive: false,
                 cases: vec![Case {
-                    parameters: vec![Variable {
-                        name: String::from("a"),
-                        _type: Type::Uint
-                    }, Variable {
-                        name: String::from("b"),
-                        _type: Type::Bool
-                    }],
-                    expressions: vec![BooleanExpression::Eq(
-                        Box::new(Expression::Uint(UintExpression::Identifier(
-                            String::from("x")
-                        ))),
-                        Box::new(Expression::Uint(UintExpression::Ite(
+                    parameters: vec![
+                        Variable {
+                            name: String::from("a"),
+                            _type: Type::Uint
+                        },
+                        Variable {
+                            name: String::from("b"),
+                            _type: Type::Bool
+                        }
+                    ],
+                    expressions: vec![BooleanExpression::EqUint(
+                        Box::new(UintExpression::Identifier(String::from("x"))),
+                        Box::new(UintExpression::Ite(
                             Box::new(BooleanExpression::Identifier(String::from("b"))),
                             Box::new(UintExpression::Identifier(String::from("a"))),
                             Box::new(UintExpression::Identifier(String::from("a"))),
-                        )))
+                        ))
                     )],
                     return_values: vec![Variable {
                         name: String::from("x"),
@@ -574,40 +585,4 @@ mod tests {
             }
         );
     }
-
-    // 	#[test]
-    // 	fn simple_function() {
-    // 		let source = r#"define g public
-    // ({a} b) x :-
-    // 	(f (f (and a b)))."#;
-
-    // 		let mut pairs = ContractParser::parse(Rule::function_def, &source).unwrap();
-
-    // 		let pair = pairs.next().unwrap();
-
-    // 		assert_eq!(Function::from(pair),
-    // 			Function {
-    // 				name: String::from("g"),
-    // 				visibility: Visibility::Public,
-    // 				cases: vec![
-    // 					Case {
-    // 						parameters: vec![
-    // 							Parameter {
-    // 								name: String::from("a"),
-    // 								_type: Type::Array,
-    // 							},
-    // 							Parameter {
-    // 								name: String::from("b"),
-    // 								_type: Type::Uint,
-    // 							}
-    // 						],
-    // 						return_value: ReturnValue {
-    // 							name: String::from("x"),
-    // 							_type: Type::Bool
-    // 						}
-    // 					}
-    // 				]
-    // 			}
-    // 		);
-    // 	}
 }
