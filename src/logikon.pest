@@ -28,7 +28,7 @@ argument = { statement | number | identifier }
 
 unary_op = @ { "prove" | "not" }
 
-binary_op = @ { "=" | "!=" | "<=" | "<" | ">=" | ">" | "and" | "or" | "+" | "-" | "*" | "/" | "select" | "update" }
+binary_op = @ { "==" | "!==" | "=" | "!=" | "<=" | "<" | ">=" | ">" | "and" | "or" | "+" | "-" | "*" | "/" | "select" | "update" }
 
 ternary_op = @ { "store" | "ite" }
 

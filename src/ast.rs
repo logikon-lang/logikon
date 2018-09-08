@@ -201,7 +201,7 @@ impl<'a> Variable {
 }
 
 impl<'a> UintExpression {
-    fn from(pair: Pair<Rule>) -> UintExpression {
+    fn from(pair: Pair<Rule>, symbols: &HashMap<String, Type>) -> UintExpression {
         let mut arg_count = 0;
 
         let mut token_iter = pair.into_inner();
@@ -210,7 +210,7 @@ impl<'a> UintExpression {
 
         match op.as_rule() {
             Rule::identifier => UintExpression::Identifier(String::from(op.as_str())),
-            Rule::statement => UintExpression::from(op),
+            Rule::statement => UintExpression::from(op, &symbols),
             Rule::function_identifier => panic!(""),
             Rule::binary_op => {
                 let argument1 = token_iter.next().unwrap();
@@ -218,24 +218,24 @@ impl<'a> UintExpression {
 
                 match op.as_str() {
                     "+" => UintExpression::Plus(
-                        Box::new(UintExpression::from(argument1)),
-                        Box::new(UintExpression::from(argument2)),
+                        Box::new(UintExpression::from(argument1, &symbols)),
+                        Box::new(UintExpression::from(argument2, &symbols)),
                     ),
                     "-" => UintExpression::Minus(
-                        Box::new(UintExpression::from(argument1)),
-                        Box::new(UintExpression::from(argument2)),
+                        Box::new(UintExpression::from(argument1, &symbols)),
+                        Box::new(UintExpression::from(argument2, &symbols)),
                     ),
                     "*" => UintExpression::Times(
-                        Box::new(UintExpression::from(argument1)),
-                        Box::new(UintExpression::from(argument2)),
+                        Box::new(UintExpression::from(argument1, &symbols)),
+                        Box::new(UintExpression::from(argument2, &symbols)),
                     ),
                     "/" => UintExpression::Div(
-                        Box::new(UintExpression::from(argument1)),
-                        Box::new(UintExpression::from(argument2)),
+                        Box::new(UintExpression::from(argument1, &symbols)),
+                        Box::new(UintExpression::from(argument2, &symbols)),
                     ),
                     "select" => UintExpression::Select(
-                        Box::new(ArrayExpression::from(argument1)),
-                        Box::new(UintExpression::from(argument2)),
+                        Box::new(ArrayExpression::from(argument1, &symbols)),
+                        Box::new(UintExpression::from(argument2, &symbols)),
                     ),
                     _ => panic!(""),
                 }
@@ -247,9 +247,9 @@ impl<'a> UintExpression {
 
                 match op.as_str() {
                     "ite" => UintExpression::Ite(
-                        Box::new(BooleanExpression::from(argument1)),
-                        Box::new(UintExpression::from(argument2)),
-                        Box::new(UintExpression::from(argument3)),
+                        Box::new(BooleanExpression::from(argument1, &symbols)),
+                        Box::new(UintExpression::from(argument2, &symbols)),
+                        Box::new(UintExpression::from(argument3, &symbols)),
                     ),
                     _ => panic!(""),
                 }
@@ -259,14 +259,8 @@ impl<'a> UintExpression {
     }
 }
 
-impl<'a> Expression {
-    fn from(pair: Pair<Rule>) -> Expression {
-        Expression::Boolean(BooleanExpression::Identifier(String::from("lol")))
-    }
-}
-
 impl<'a> ArrayExpression {
-    fn from(pair: Pair<Rule>) -> ArrayExpression {
+    fn from(pair: Pair<Rule>, symbols: &HashMap<String, Type>) -> ArrayExpression {
         let mut token_iter = pair.into_inner();
 
         let op = token_iter.next().unwrap();
@@ -280,9 +274,9 @@ impl<'a> ArrayExpression {
 
                 match op.as_str() {
                     "store" => ArrayExpression::Store(
-                        Box::new(ArrayExpression::from(argument1)),
-                        Box::new(UintExpression::from(argument2)),
-                        Box::new(UintExpression::from(argument3)),
+                        Box::new(ArrayExpression::from(argument1, &symbols)),
+                        Box::new(UintExpression::from(argument2, &symbols)),
+                        Box::new(UintExpression::from(argument3, &symbols)),
                     ),
                     _ => panic!(""),
                 }
@@ -293,20 +287,20 @@ impl<'a> ArrayExpression {
 }
 
 impl<'a> BooleanExpression {
-    fn from(pair: Pair<Rule>) -> BooleanExpression {
+    fn from(pair: Pair<Rule>, symbols: &HashMap<String, Type>) -> BooleanExpression {
         let mut token_iter = pair.into_inner();
 
         let op = token_iter.next().unwrap();
 
         match op.as_rule() {
-            Rule::statement => BooleanExpression::from(op),
+            Rule::statement => BooleanExpression::from(op, &symbols),
             Rule::identifier => BooleanExpression::Identifier(String::from(op.as_str())),
             Rule::function_identifier => panic!("NO FUNCTIONS"),
             Rule::unary_op => {
                 let argument = token_iter.next().unwrap();
                 match op.as_str() {
                     "prove" => panic!("NO PROVE"),
-                    "not" => BooleanExpression::Not(Box::new(BooleanExpression::from(argument))),
+                    "not" => BooleanExpression::Not(Box::new(BooleanExpression::from(argument, &symbols))),
                     _ => panic!(""),
                 }
             }
@@ -316,28 +310,36 @@ impl<'a> BooleanExpression {
 
                 match op.as_str() {
                     "<=" => BooleanExpression::Le(
-                        Box::new(UintExpression::from(argument1)),
-                        Box::new(UintExpression::from(argument2)),
+                        Box::new(UintExpression::from(argument1, &symbols)),
+                        Box::new(UintExpression::from(argument2, &symbols)),
                     ),
                     ">=" => BooleanExpression::Ge(
-                        Box::new(UintExpression::from(argument1)),
-                        Box::new(UintExpression::from(argument2)),
+                        Box::new(UintExpression::from(argument1, &symbols)),
+                        Box::new(UintExpression::from(argument2, &symbols)),
                     ),
                     "=" => BooleanExpression::EqBool(
-                        Box::new(BooleanExpression::from(argument1)),
-                        Box::new(BooleanExpression::from(argument2)),
+                        Box::new(BooleanExpression::from(argument1, &symbols)),
+                        Box::new(BooleanExpression::from(argument2, &symbols)),
                     ),
                     "!=" => BooleanExpression::NeBool(
-                        Box::new(BooleanExpression::from(argument1)),
-                        Box::new(BooleanExpression::from(argument2)),
+                        Box::new(BooleanExpression::from(argument1, &symbols)),
+                        Box::new(BooleanExpression::from(argument2, &symbols)),
+                    ),
+                    "==" => BooleanExpression::EqUint(
+                        Box::new(UintExpression::from(argument1, &symbols)),
+                        Box::new(UintExpression::from(argument2, &symbols)),
+                    ),
+                    "!==" => BooleanExpression::NeUint(
+                        Box::new(UintExpression::from(argument1, &symbols)),
+                        Box::new(UintExpression::from(argument2, &symbols)),
                     ),
                     ">" => BooleanExpression::Gt(
-                        Box::new(UintExpression::from(argument1)),
-                        Box::new(UintExpression::from(argument2)),
+                        Box::new(UintExpression::from(argument1, &symbols)),
+                        Box::new(UintExpression::from(argument2, &symbols)),
                     ),
                     "<" => BooleanExpression::Lt(
-                        Box::new(UintExpression::from(argument1)),
-                        Box::new(UintExpression::from(argument2)),
+                        Box::new(UintExpression::from(argument1, &symbols)),
+                        Box::new(UintExpression::from(argument2, &symbols)),
                     ),
                     _ => panic!(""),
                 }
@@ -349,9 +351,9 @@ impl<'a> BooleanExpression {
 
                 match op.as_str() {
                     "ite" => BooleanExpression::Ite(
-                        Box::new(BooleanExpression::from(argument1)),
-                        Box::new(BooleanExpression::from(argument2)),
-                        Box::new(BooleanExpression::from(argument3)),
+                        Box::new(BooleanExpression::from(argument1, &symbols)),
+                        Box::new(BooleanExpression::from(argument2, &symbols)),
+                        Box::new(BooleanExpression::from(argument3, &symbols)),
                     ),
                     _ => panic!(""),
                 }
@@ -379,7 +381,7 @@ impl<'a> Case {
                 }
                 Rule::case_body => {
                     for t in p.into_inner() {
-                        expressions.push(BooleanExpression::from(t));
+                        expressions.push(BooleanExpression::from(t, &symbols));
                     }
                 }
                 c => panic!("{:?}", c),
@@ -520,7 +522,7 @@ mod tests {
     fn ite_uint_function() {
         let source = r#"define f (Uint Bool) -> Uint
         case (a b) x :-
-            (= x (ite b a a)).
+            (== x (ite b a a)).
     "#;
 
         let mut pairs = ContractParser::parse(Rule::function_def, &source).unwrap();
