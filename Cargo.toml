@@ -7,5 +7,3 @@ authors = ["Leonardo Alt <leo@ethereum.org>"]
 pest = "^1.0"
 pest_derive = "^1.0"
 z3 = "0.2.0"
-log = "0.3"
-env_logger = "0.3"

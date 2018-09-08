@@ -1,8 +1,6 @@
 extern crate pest;
 #[macro_use]
 extern crate pest_derive;
-extern crate log;
-extern crate env_logger;
 
 extern crate z3;
 
@@ -15,7 +13,7 @@ use pest::Parser;
 
 #[derive(Parser)]
 #[grammar = "logikon.pest"]
-struct IdentParser;
+struct ContractParser;
 
 fn main() {
 
@@ -40,9 +38,8 @@ mod tests {
     fn basic_syntax() {
         let source = file_to_string("./examples/syntax.lk");
 
-        let pairs = IdentParser::parse(Rule::contract, &source).unwrap();
+        let pairs = ContractParser::parse(Rule::contract, &source).unwrap();
 
-        // Because ident_list is silent, the iterator will contain idents
         for pair in pairs {
             let span = pair.clone().into_span();
             // A pair is a combination of the rule which matched and a span of input

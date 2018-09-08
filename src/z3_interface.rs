@@ -1,7 +1,5 @@
 use z3::*;
 
-use env_logger;
-
 pub struct Z3Interface<'ctx>
 {
     context: &'ctx Context,
@@ -18,9 +16,6 @@ impl<'ctx> Z3Interface<'ctx>
     }
 
     pub fn test(&self) {
-        let _ = env_logger::init();
-    //    let cfg = Config::new();
-    //    let ctx = Context::new(&cfg);
         let x = self.context.named_int_const("x");
         let y = self.context.named_int_const("y");
         let zero = self.context.from_i64(0);

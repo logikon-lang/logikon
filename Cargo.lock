@@ -59,8 +59,6 @@ dependencies = [
 name = "logikon_rust"
 version = "0.1.0"
 dependencies = [
- "env_logger 0.3.5 (registry+https://github.com/rust-lang/crates.io-index)",
- "log 0.3.9 (registry+https://github.com/rust-lang/crates.io-index)",
  "pest 1.0.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "pest_derive 1.0.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "z3 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
