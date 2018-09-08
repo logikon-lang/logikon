@@ -622,6 +622,94 @@ mod tests {
     }
 
     #[test]
+    fn function_call() {
+        let source = r#"define min (Uint Uint) -> Uint
+                        case (a b) x :-
+                            (== x (ite (< a b) a b)).
+
+                        define forward (Uint Uint) -> Uint
+                        case (a b) x :-
+                            (== x (min a b)).
+        "#;
+
+        let mut pairs = ContractParser::parse(Rule::contract, &source).unwrap();
+
+        let pair = pairs.next().unwrap();
+
+        assert_eq!(
+            Contract::from(pair),
+            Contract { functions : vec![Function {
+                name: String::from("min"),
+                recursive: false,
+                cases: vec![Case {
+                    parameters: vec![
+                        Variable {
+                            name: String::from("a"),
+                            _type: Type::Uint
+                        },
+                        Variable {
+                            name: String::from("b"),
+                            _type: Type::Uint
+                        }
+                    ],
+                    expressions: vec![BooleanExpression::EqUint(
+                        Box::new(UintExpression::Identifier(String::from("x"))),
+                        Box::new(UintExpression::Ite(
+                            Box::new(BooleanExpression::Lt(
+                                Box::new(UintExpression::Identifier(String::from("a"))),
+                                Box::new(UintExpression::Identifier(String::from("b")))
+                            )),
+                            Box::new(UintExpression::Identifier(String::from("a"))),
+                            Box::new(UintExpression::Identifier(String::from("b"))),
+                        ))
+                    )],
+                    return_value: Variable {
+                        name: String::from("x"),
+                        _type: Type::Uint
+                    }
+                }],
+                signature: Signature {
+                    inputs: vec![Type::Uint, Type::Uint],
+                    output: Type::Uint
+                }
+            }, Function {
+                name: String::from("forward"),
+                recursive: false,
+                cases: vec![Case {
+                    parameters: vec![
+                        Variable {
+                            name: String::from("a"),
+                            _type: Type::Uint
+                        },
+                        Variable {
+                            name: String::from("b"),
+                            _type: Type::Uint
+                        }
+                    ],
+                    expressions: vec![BooleanExpression::EqUint(
+                        Box::new(UintExpression::Identifier(String::from("x"))),
+                        Box::new(UintExpression::FunctionCall(
+                            String::from("min"), vec![
+                                UintExpression::Identifier(String::from("a")),
+                                UintExpression::Identifier(String::from("b")),
+                            ]
+                        ))
+                    )],
+                    return_value: Variable {
+                        name: String::from("x"),
+                        _type: Type::Uint
+                    }
+                }],
+                signature: Signature {
+                    inputs: vec![Type::Uint, Type::Uint],
+                    output: Type::Uint
+                }
+            }
+            ]}
+        );
+    }
+
+    #[test]
     fn contract() {
         let source = r#"declare Balance Array.
 
