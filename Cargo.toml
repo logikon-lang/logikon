@@ -1,0 +1,6 @@
+[package]
+name = "logikon_rust"
+version = "0.1.0"
+authors = ["Leonardo Alt <leo@ethereum.org>"]
+
+[dependencies]
