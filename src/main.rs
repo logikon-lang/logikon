@@ -1,12 +1,25 @@
 extern crate pest;
 #[macro_use]
 extern crate pest_derive;
+extern crate log;
+extern crate env_logger;
+
+extern crate z3;
+
+mod z3_interface;
+use z3_interface::Z3Interface;
+use z3::{Context, Config};
+
+
+use pest::Parser;
 
 #[derive(Parser)]
 #[grammar = "logikon.pest"]
 struct IdentParser;
 
-fn main() {}
+fn main() {
+
+}
 
 #[cfg(test)]
 mod tests {
@@ -47,5 +60,13 @@ mod tests {
                 };
             }
         }
+    }
+
+    #[test]
+    fn z3() {
+        let cfg = Config::new();
+        let ctx = Context::new(&cfg);
+        let z3 = Z3Interface::with_context(&ctx);
+        z3.test();
     }
 }
