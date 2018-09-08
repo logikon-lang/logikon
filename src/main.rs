@@ -2,6 +2,15 @@ extern crate pest;
 #[macro_use]
 extern crate pest_derive;
 
+#[macro_use]
+extern crate log;
+extern crate env_logger;
+
+extern crate z3;
+
+mod z3_interface;
+use z3_interface::Z3Interface;
+
 use pest::Parser;
 
 #[derive(Parser)]
@@ -34,4 +43,7 @@ fn main() {
             };
         }
     }
+
+    let z3 = Z3Interface::new();
+    z3.test();
 }
