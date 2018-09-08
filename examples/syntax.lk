@@ -1,0 +1,6 @@
+declare balance public Array.
+declare lala public UInt.
+define f public ().
+define g public
+({a} b) x :- 
+	(f (f (and a b))).
