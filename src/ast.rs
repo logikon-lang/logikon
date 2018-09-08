@@ -7,13 +7,13 @@ pub struct Contract {
 }
 
 #[derive(Hash, PartialEq, Debug)]
-struct StateVariable {
+pub struct StateVariable {
     name: String,
     _type: Type,
 }
 
 #[derive(Hash, PartialEq, Debug)]
-struct Function {
+pub struct Function {
     name: String,
     cases: Vec<Case>,
     recursive: bool,
@@ -21,14 +21,14 @@ struct Function {
 }
 
 #[derive(Hash, PartialEq, Debug, Clone)]
-struct Case {
+pub struct Case {
     parameters: Vec<Variable>, // TODO implement patterns
     expressions: Vec<BooleanExpression>,
     return_value: Variable,
 }
 
 #[derive(Hash, PartialEq, Debug, Clone)]
-enum BooleanExpression {
+pub enum BooleanExpression {
     Identifier(String),
 
     EqBool(Box<BooleanExpression>, Box<BooleanExpression>),
@@ -53,13 +53,13 @@ enum BooleanExpression {
 }
 
 #[derive(Hash, PartialEq, Debug, Clone)]
-enum Expression {
+pub enum Expression {
     Boolean(BooleanExpression),
     Uint(UintExpression),
 }
 
 #[derive(Hash, PartialEq, Debug, Clone)]
-enum UintExpression {
+pub enum UintExpression {
     Identifier(String),
 
     Plus(Box<UintExpression>, Box<UintExpression>),
@@ -77,7 +77,7 @@ enum UintExpression {
 }
 
 #[derive(Hash, PartialEq, Debug, Clone)]
-enum ArrayExpression {
+pub enum ArrayExpression {
     Identifier(String),
     Store(
         Box<ArrayExpression>,
@@ -87,13 +87,13 @@ enum ArrayExpression {
 }
 
 #[derive(Hash, PartialEq, Debug, Clone)]
-struct Variable {
+pub struct Variable {
     name: String,
     _type: Type,
 }
 
 #[derive(Hash, PartialEq, Debug, Clone)]
-enum Type {
+pub enum Type {
     Unknown,
     Uint,
     Array,
@@ -102,7 +102,7 @@ enum Type {
 }
 
 #[derive(Hash, PartialEq, Debug)]
-struct Signature {
+pub struct Signature {
     inputs: Vec<Type>,
     output: Type,
 }
