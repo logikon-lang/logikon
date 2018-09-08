@@ -497,7 +497,7 @@ mod tests {
     fn identity_function() {
         let source = r#"define f (Bool) -> Bool 
         case (a) x :-
-            (= x y).
+            (= x a).
     "#;
 
         let mut pairs = ContractParser::parse(Rule::function_def, &source).unwrap();
@@ -516,7 +516,7 @@ mod tests {
                     }],
                     expressions: vec![BooleanExpression::EqBool(
                         Box::new(BooleanExpression::Identifier(String::from("x"))),
-                        Box::new(BooleanExpression::Identifier(String::from("y")))
+                        Box::new(BooleanExpression::Identifier(String::from("a")))
                     )],
                     return_value: Variable {
                         name: String::from("x"),
@@ -660,7 +660,7 @@ mod tests {
     fn public_api() {
         let source = r#"define f (Bool) -> Bool 
         case (a) x :-
-            (= x y).
+            (= x a).
     "#;
 
         let contract = logikon_parse(&String::from(source));
@@ -679,7 +679,7 @@ mod tests {
                         }],
                         expressions: vec![BooleanExpression::EqBool(
                             Box::new(BooleanExpression::Identifier(String::from("x"))),
-                            Box::new(BooleanExpression::Identifier(String::from("y")))
+                            Box::new(BooleanExpression::Identifier(String::from("a")))
                         )],
                         return_value: Variable {
                             name: String::from("x"),
