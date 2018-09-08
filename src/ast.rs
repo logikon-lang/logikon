@@ -107,23 +107,6 @@ struct Signature {
     output: Type,
 }
 
-// impl<'a> From<Pair<'a, Rule>> for Parameter {
-// 	fn from(pair: Pair<Rule>) -> Function {
-// 		let mut name = String::new();
-// 		let mut _type = Type::Bool;
-
-// 		for p in pair.into_inner() {
-// 			match p.as_rule() {
-// 				Rule::identifier => {
-// 					name = p.as_str().to_string();
-// 				},
-
-// 				c => panic!("{:?}", c)
-// 			}
-// 		}
-// 	}
-// }
-
 impl<'a> Type {
     fn from(pair: Pair<Rule>) -> Type {
         match pair.as_rule() {
