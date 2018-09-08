@@ -5,19 +5,22 @@ extern crate pest_derive;
 extern crate z3;
 
 mod z3_interface;
+use z3::{Config, Context};
 use z3_interface::Z3Interface;
-use z3::{Context, Config};
 
+mod ast;
 
 use pest::Parser;
+use pest::*;
+
+#[cfg(debug_assertions)]
+const _GRAMMAR: &'static str = include_str!("logikon.pest"); // relative to this file
 
 #[derive(Parser)]
 #[grammar = "logikon.pest"]
 struct ContractParser;
 
-fn main() {
-
-}
+fn main() {}
 
 #[cfg(test)]
 mod tests {
@@ -57,6 +60,22 @@ mod tests {
                 };
             }
         }
+    }
+
+    #[test]
+    fn visitor() {
+        let source = file_to_string("./examples/syntax.lk");
+
+        let pairs = ContractParser::parse(Rule::contract, &source).unwrap();
+
+        // traverse and print nodes
+
+        //enter parent
+        //enter child 1
+        //exit child 1
+        //enter child 2
+        //exit child2
+        //exit parent
     }
 
     #[test]
