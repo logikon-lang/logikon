@@ -139,6 +139,30 @@ impl<'a> Type {
     }
 }
 
+impl<'a> StateVariable {
+    fn from(pair: Pair<Rule>) -> StateVariable {
+        let mut name = String::new();
+        let mut _type = Type::Unknown;
+
+        for p in pair.into_inner() {
+            match p.as_rule() {
+                Rule::identifier => {
+                    name = p.as_str().to_string();
+                }
+                Rule::logikon_type => {
+                    _type = Type::from(p);
+                }
+                c => panic!("{:?}", c),
+            }
+        }
+
+        StateVariable {
+            name,
+            _type
+        }
+    }
+}
+
 impl<'a> Function {
     fn from(pair: Pair<Rule>) -> Function {
         let mut name = String::new();
@@ -407,6 +431,23 @@ struct ContractParser;
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn statevar() {
+        let source = r#"declare Balance Array."#;
+
+        let mut pairs = ContractParser::parse(Rule::state_var_decl, &source).unwrap();
+
+        let pair = pairs.next().unwrap();
+
+        assert_eq!(
+            StateVariable::from(pair),
+            StateVariable {
+                name: String::from("Balance"),
+                _type: Type::Array,
+            }
+        );
+    }
 
     #[test]
     fn empty_function() {
