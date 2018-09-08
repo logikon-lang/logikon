@@ -1,0 +1,42 @@
+contract = { soi ~ (state_var_decl)* ~ (function_def)* ~ eoi }
+
+function_def = { "define" ~ identifier ~ visibility ~ (case)+ }
+
+case = { "(" ~ parameter_list ~ ")" ~ return_var ~ case_body? ~ "." }
+
+parameter_list = { (array_param | uint_param)* }
+
+array_param = @ { "{" ~ identifier ~ "}" }
+
+uint_param = @ { identifier }
+
+statement = { "(" ~ (function_identifier | unary_op | binary_op | ternary_op) ~ (argument)* ~ ")" }
+
+argument = { statement | number | identifier}
+
+unary_op = @ { "prove" | "not" }
+
+binary_op = @ { "=" | "!=" | "<" | "<=" | ">" | ">=" | "and" | "or" | "+" | "-" | "*" | "/" | "select" | "update" }
+
+ternary_op = @ { "store" | "ite" }
+
+function_identifier = @ { identifier }
+
+case_body = { ":-" ~ (statement)+ }
+
+return_var = @ { identifier? }
+
+state_var_decl = { "declare" ~ identifier ~ visibility ~ logikon_type ~ "."}
+
+logikon_type = @ { "UInt" | "Array" | "List" }
+
+visibility = @ { "private" | "public" }
+
+identifier = @ { alpha ~ (alpha | digit)* }
+
+number = @ { (digit)+ }
+
+alpha = _ { 'a'..'z' | 'A'..'Z' }
+digit = _ { '0'..'9' }
+
+whitespace = _ { " " | "\t" | "\n" }
