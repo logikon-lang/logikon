@@ -1,22 +1,32 @@
 contract = { soi ~ (state_var_decl)* ~ (function_def)* ~ eoi }
 
-function_def = { "define" ~ identifier ~ visibility ~ (case)+ }
+function_def = { "define" ~ recursive? ~ identifier ~ type_list ~ "->" ~ type_list ~ (case)+ }
 
-case = { "(" ~ parameter_list ~ ")" ~ return_var ~ case_body? ~ "." }
+type_list = { "(" ~ (logikon_type)* ~ ")" }
 
-parameter_list = { (array_param | uint_param)* }
+recursive = @ { "recursive" }
 
-array_param = @ { "{" ~ identifier ~ "}" }
+case = { "case" ~ parameter_list ~ parameter_list ~ case_body? ~ "." }
 
-uint_param = @ { identifier }
+parameter_list = { "(" ~ (array_param | uint_param | list_param)* ~ ")" }
 
-statement = { "(" ~ (function_identifier | unary_op | binary_op | ternary_op) ~ (argument)* ~ ")" }
+list_param = @ { "[" ~ list_head_param ~ list_tail_param? ~ "]" }
 
-argument = { statement | number | identifier}
+list_tail_param = @ { ":" ~ ((identifier ~ "*") | "_") }
+
+list_head_param = @ { uint_param | "_" }
+
+array_param = @ { "{" ~ uint_param ~ "}" }
+
+uint_param = @ { identifier  | number }
+
+statement = $ { "(" ~ (function_identifier | unary_op | binary_op | ternary_op) ~ (" " ~ argument)* ~ ")" }
+
+argument = { statement | number | identifier }
 
 unary_op = @ { "prove" | "not" }
 
-binary_op = @ { "=" | "!=" | "<" | "<=" | ">" | ">=" | "and" | "or" | "+" | "-" | "*" | "/" | "select" | "update" }
+binary_op = @ { "=" | "!=" | "<=" | "<" | ">=" | ">" | "and" | "or" | "+" | "-" | "*" | "/" | "select" | "update" }
 
 ternary_op = @ { "store" | "ite" }
 
@@ -26,11 +36,9 @@ case_body = { ":-" ~ (statement)+ }
 
 return_var = @ { identifier? }
 
-state_var_decl = { "declare" ~ identifier ~ visibility ~ logikon_type ~ "."}
+state_var_decl = { "declare" ~ identifier ~ logikon_type ~ "."}
 
-logikon_type = @ { "UInt" | "Array" | "List" }
-
-visibility = @ { "private" | "public" }
+logikon_type = @ { "Bool" | "Uint" | "Array" | "List" }
 
 identifier = @ { alpha ~ (alpha | digit)* }
 
