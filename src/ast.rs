@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 #[derive(Hash, PartialEq, Debug)]
-struct Contract {
+pub struct Contract {
     state: Vec<StateVariable>,
     functions: Vec<Function>,
 }
@@ -442,6 +442,8 @@ impl<'a> Case {
     }
 }
 
+
+
 use pest::iterators::Pair;
 use pest::Parser;
 
@@ -451,6 +453,11 @@ const _GRAMMAR: &'static str = include_str!("logikon.pest"); // relative to this
 #[derive(Parser)]
 #[grammar = "logikon.pest"]
 struct ContractParser;
+
+pub fn logikon_parse(source: &str) -> Contract {
+    let mut pairs = ContractParser::parse(Rule::contract, &source).unwrap();
+    Contract::from(pairs.next().unwrap())
+}
 
 #[cfg(test)]
 mod tests {
@@ -658,6 +665,45 @@ mod tests {
                     signature: Signature {
                         inputs: vec![Type::Uint],
                         output: Type::Uint
+                    }
+                }],
+            }
+        );
+    }
+
+    #[test]
+    fn public_api() {
+        let source = r#"define f (Bool) -> Bool 
+        case (a) x :-
+            (= x y).
+    "#;
+
+        let contract = logikon_parse(&String::from(source));
+
+        assert_eq!(
+            contract,
+            Contract {
+                state: vec![],
+                functions: vec![Function {
+                    name: String::from("f"),
+                    recursive: false,
+                    cases: vec![Case {
+                        parameters: vec![Variable {
+                            name: String::from("a"),
+                            _type: Type::Bool
+                        }],
+                        expressions: vec![BooleanExpression::EqBool(
+                            Box::new(BooleanExpression::Identifier(String::from("x"))),
+                            Box::new(BooleanExpression::Identifier(String::from("y")))
+                        )],
+                        return_value: Variable {
+                            name: String::from("x"),
+                            _type: Type::Bool
+                        }
+                    }],
+                    signature: Signature {
+                        inputs: vec![Type::Bool],
+                        output: Type::Bool
                     }
                 }],
             }
