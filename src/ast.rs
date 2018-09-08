@@ -2,29 +2,29 @@ use std::collections::HashMap;
 
 #[derive(Hash, PartialEq, Debug)]
 pub struct Contract {
-    state: Vec<StateVariable>,
-    functions: Vec<Function>,
+    pub state: Vec<StateVariable>,
+    pub functions: Vec<Function>,
 }
 
 #[derive(Hash, PartialEq, Debug)]
 pub struct StateVariable {
-    name: String,
-    _type: Type,
+    pub name: String,
+    pub _type: Type,
 }
 
 #[derive(Hash, PartialEq, Debug)]
 pub struct Function {
-    name: String,
-    cases: Vec<Case>,
-    recursive: bool,
-    signature: Signature,
+    pub name: String,
+    pub cases: Vec<Case>,
+    pub recursive: bool,
+    pub signature: Signature,
 }
 
 #[derive(Hash, PartialEq, Debug, Clone)]
 pub struct Case {
-    parameters: Vec<Variable>, // TODO implement patterns
-    expressions: Vec<BooleanExpression>,
-    return_value: Variable,
+    pub parameters: Vec<Variable>, // TODO implement patterns
+    pub expressions: Vec<BooleanExpression>,
+    pub return_value: Variable,
 }
 
 #[derive(Hash, PartialEq, Debug, Clone)]
@@ -88,8 +88,8 @@ pub enum ArrayExpression {
 
 #[derive(Hash, PartialEq, Debug, Clone)]
 pub struct Variable {
-    name: String,
-    _type: Type,
+    pub name: String,
+    pub _type: Type,
 }
 
 #[derive(Hash, PartialEq, Debug, Clone)]
@@ -103,8 +103,8 @@ pub enum Type {
 
 #[derive(Hash, PartialEq, Debug)]
 pub struct Signature {
-    inputs: Vec<Type>,
-    output: Type,
+    pub inputs: Vec<Type>,
+    pub output: Type,
 }
 
 impl<'a> Type {
