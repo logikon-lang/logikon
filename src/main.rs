@@ -1,10 +1,11 @@
 extern crate pest;
 #[macro_use]
 extern crate pest_derive;
-extern crate z3;
+//extern crate z3;
 extern crate colored;
 
-mod z3_interface;
+//mod z3_interface;
+
 use codegen::logikon_compile;
 use colored::*;
 
