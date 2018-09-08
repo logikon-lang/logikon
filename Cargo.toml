@@ -1,7 +1,7 @@
 [package]
 name = "logikon_rust"
 version = "0.1.0"
-authors = ["Leonardo Alt <leo@ethereum.org>"]
+authors = ["Leonardo Alt <leo@ethereum.org>", "Alex Beregszaszi <alex@rtfs.hu>", "Thibaut Schaeffer <thibaut@schaeff.fr>"]
 
 [dependencies]
 pest = "^1.0"
