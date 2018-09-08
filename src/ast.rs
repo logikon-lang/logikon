@@ -139,6 +139,30 @@ impl<'a> Type {
     }
 }
 
+impl<'a> Contract {
+    fn from(pair: Pair<Rule>) -> Contract {
+        let mut state: Vec<StateVariable> = vec![];
+        let mut functions: Vec<Function> = vec![];
+
+        for p in pair.into_inner() {
+            match p.as_rule() {
+                Rule::state_var_decl => {
+                    state.push(StateVariable::from(p));
+                }
+                Rule::function_def => {
+                    functions.push(Function::from(p));
+                }
+                c => panic!("{:?}", c),
+            }
+        }
+
+        Contract {
+            state,
+            functions,
+        }
+    }
+}
+
 impl<'a> StateVariable {
     fn from(pair: Pair<Rule>) -> StateVariable {
         let mut name = String::new();
@@ -601,6 +625,41 @@ mod tests {
                     inputs: vec![Type::Uint, Type::Bool],
                     output: Type::Uint
                 }
+            }
+        );
+    }
+
+    #[test]
+    fn contract() {
+        let source = r#"declare Balance Array.
+
+        define f (Uint) -> Uint
+            case () _."#;
+
+        let mut pairs = ContractParser::parse(Rule::contract, &source).unwrap();
+
+        let pair = pairs.next().unwrap();
+
+        assert_eq!(
+            Contract::from(pair),
+            Contract {
+                state: vec![StateVariable {
+                    name: String::from("Balance"),
+                    _type: Type::Array,
+                }],
+                functions: vec![Function {
+                    name: String::from("f"),
+                    recursive: false,
+                    cases: vec![Case {
+                        parameters: vec![],
+                        expressions: vec![],
+                        return_value: Variable { name: String::from("_"), _type: Type::Uint }
+                    }],
+                    signature: Signature {
+                        inputs: vec![Type::Uint],
+                        output: Type::Uint
+                    }
+                }],
             }
         );
     }
