@@ -29,12 +29,14 @@ struct Case {
 enum BooleanExpression {
     Identifier(String),
 
-    Eq(Box<Expression>, Box<Expression>),
+    EqBool(Box<BooleanExpression>, Box<BooleanExpression>),
+    NeBool(Box<BooleanExpression>, Box<BooleanExpression>),
+    EqUint(Box<UintExpression>, Box<UintExpression>),
+    NeUint(Box<UintExpression>, Box<UintExpression>),
     Lt(Box<UintExpression>, Box<UintExpression>),
     Gt(Box<UintExpression>, Box<UintExpression>),
     Le(Box<UintExpression>, Box<UintExpression>),
     Ge(Box<UintExpression>, Box<UintExpression>),
-    Ne(Box<Expression>, Box<Expression>),
 
     And(Box<BooleanExpression>, Box<BooleanExpression>),
     Or(Box<BooleanExpression>, Box<BooleanExpression>),
@@ -58,13 +60,25 @@ enum Expression {
 enum UintExpression {
     Identifier(String),
 
+    Plus(Box<UintExpression>, Box<UintExpression>),
+    Minus(Box<UintExpression>, Box<UintExpression>),
+    Times(Box<UintExpression>, Box<UintExpression>),
+    Div(Box<UintExpression>, Box<UintExpression>),
+
+    Ite(
+        Box<BooleanExpression>,
+        Box<UintExpression>,
+        Box<UintExpression>,
+    ),
+
+
     Select(Box<ArrayExpression>, Box<UintExpression>),
 }
 
 #[derive(Hash, PartialEq, Debug, Clone)]
 enum ArrayExpression {
     Identifier(String),
-    Store(Box<ArrayExpression>, UintExpression, UintExpression),
+    Store(Box<ArrayExpression>, Box<UintExpression>, Box<UintExpression>),
 }
 
 #[derive(Hash, PartialEq, Debug)]
@@ -75,6 +89,7 @@ struct Variable {
 
 #[derive(Hash, PartialEq, Debug, Clone)]
 enum Type {
+    Unknown,
     Uint,
     Array,
     Bool,
@@ -182,21 +197,98 @@ impl<'a> From<Pair<'a, Rule>> for Function {
 impl<'a> From<Pair<'a, Rule>> for Variable {
     fn from(pair: Pair<Rule>) -> Variable {
         Variable {
-            name: String::from("a"),
-            _type: Type::Uint,
+            name: String::from(pair.as_str()),
+            _type: Type::Unknown,
         }
     }
 }
 
 impl<'a> From<Pair<'a, Rule>> for UintExpression {
     fn from(pair: Pair<Rule>) -> UintExpression {
-        UintExpression::Identifier(String::from("lol"))
+        let mut arg_count = 0;
+
+        let mut token_iter = pair.into_inner();
+
+        let op = token_iter.next().unwrap();
+
+        match op.as_rule() {
+            Rule::function_identifier => panic!(""),
+            Rule::binary_op => {
+                let argument1 = token_iter.next().unwrap();
+                let argument2 = token_iter.next().unwrap();
+
+                match op.as_str() {
+                    "+" => UintExpression::Plus(
+                        Box::new(UintExpression::from(argument1)),
+                        Box::new(UintExpression::from(argument2)),
+                    ),
+                    "-" => UintExpression::Minus(
+                        Box::new(UintExpression::from(argument1)),
+                        Box::new(UintExpression::from(argument2)),
+                    ),
+                    "*" => UintExpression::Times(
+                        Box::new(UintExpression::from(argument1)),
+                        Box::new(UintExpression::from(argument2)),
+                    ),
+                    "/" => UintExpression::Div(
+                        Box::new(UintExpression::from(argument1)),
+                        Box::new(UintExpression::from(argument2)),
+                    ),
+                    "select" => UintExpression::Select(
+                        Box::new(ArrayExpression::from(argument1)),
+                        Box::new(UintExpression::from(argument2)),
+                    ),
+                    _ => panic!(""),
+                }
+            }
+            Rule::ternary_op => {
+                let argument1 = token_iter.next().unwrap();
+                let argument2 = token_iter.next().unwrap();
+                let argument3 = token_iter.next().unwrap();
+
+                match op.as_str() {
+                    "ite" => UintExpression::Ite(
+                        Box::new(BooleanExpression::from(argument1)),
+                        Box::new(UintExpression::from(argument2)),
+                        Box::new(UintExpression::from(argument3)),
+                    ),
+                    _ => panic!(""),
+                }
+            }
+            _ => panic!(""),
+        }
     }
 }
 
 impl<'a> From<Pair<'a, Rule>> for Expression {
     fn from(pair: Pair<Rule>) -> Expression {
         Expression::Boolean(BooleanExpression::Identifier(String::from("lol")))
+    }
+}
+
+impl<'a> From<Pair<'a, Rule>> for ArrayExpression {
+    fn from(pair: Pair<Rule>) -> ArrayExpression {
+        let mut token_iter = pair.into_inner();
+
+        let op = token_iter.next().unwrap();
+
+        match op.as_rule() {
+            Rule::function_identifier => panic!(""),
+            Rule::ternary_op => {
+                let argument1 = token_iter.next().unwrap();
+                let argument2 = token_iter.next().unwrap();
+                let argument3 = token_iter.next().unwrap();
+
+                match op.as_str() {
+                    "store" => ArrayExpression::Store(Box::new(ArrayExpression::from(argument1)),
+                                                        Box::new(UintExpression::from(argument2)),
+                                                        Box::new(UintExpression::from(argument3))
+                                                        ),
+                    _ => panic!(""),
+                }
+            },
+            _ => panic!(""),
+        }
     }
 }
 
@@ -231,13 +323,13 @@ impl<'a> From<Pair<'a, Rule>> for BooleanExpression {
                         Box::new(UintExpression::from(argument1)),
                         Box::new(UintExpression::from(argument2)),
                     ),
-                    "=" => BooleanExpression::Eq(
-                        Box::new(Expression::from(argument1)),
-                        Box::new(Expression::from(argument2)),
+                    "=" => BooleanExpression::EqBool(
+                        Box::new(BooleanExpression::from(argument1)),
+                        Box::new(BooleanExpression::from(argument2)),
                     ),
-                    "!=" => BooleanExpression::Ne(
-                        Box::new(Expression::from(argument1)),
-                        Box::new(Expression::from(argument2)),
+                    "!=" => BooleanExpression::NeBool(
+                        Box::new(BooleanExpression::from(argument1)),
+                        Box::new(BooleanExpression::from(argument2)),
                     ),
                     ">" => BooleanExpression::Gt(
                         Box::new(UintExpression::from(argument1)),
@@ -431,6 +523,53 @@ mod tests {
                 signature: Signature {
                     inputs: vec![Type::Bool],
                     outputs: vec![Type::Bool]
+                }
+            }
+        );
+    }
+
+    #[test]
+    fn ite_uint_function() {
+        let source = r#"define f (Uint Bool) -> (Uint)
+        case (a b) (x) :-
+            (= x (ite b a a)).
+    "#;
+
+        let mut pairs = ContractParser::parse(Rule::function_def, &source).unwrap();
+
+        let pair = pairs.next().unwrap();
+
+        assert_eq!(
+            Function::from(pair),
+            Function {
+                name: String::from("f"),
+                recursive: false,
+                cases: vec![Case {
+                    parameters: vec![Variable {
+                        name: String::from("a"),
+                        _type: Type::Uint
+                    }, Variable {
+                        name: String::from("b"),
+                        _type: Type::Bool
+                    }],
+                    expressions: vec![BooleanExpression::Eq(
+                        Box::new(Expression::Uint(UintExpression::Identifier(
+                            String::from("x")
+                        ))),
+                        Box::new(Expression::Uint(UintExpression::Ite(
+                            Box::new(BooleanExpression::Identifier(String::from("b"))),
+                            Box::new(UintExpression::Identifier(String::from("a"))),
+                            Box::new(UintExpression::Identifier(String::from("a"))),
+                        )))
+                    )],
+                    return_values: vec![Variable {
+                        name: String::from("x"),
+                        _type: Type::Uint
+                    }]
+                }],
+                signature: Signature {
+                    inputs: vec![Type::Uint, Type::Bool],
+                    outputs: vec![Type::Uint]
                 }
             }
         );
