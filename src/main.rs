@@ -5,6 +5,7 @@ extern crate pest_derive;
 extern crate z3;
 
 mod z3_interface;
+use codegen::logikon_compile;
 use z3::{Config, Context};
 use z3_interface::Z3Interface;
 
@@ -13,6 +14,8 @@ mod codegen;
 
 use pest::Parser;
 use pest::*;
+use std::fs::File;
+use std::io::prelude::*;
 
 #[cfg(debug_assertions)]
 const _GRAMMAR: &'static str = include_str!("logikon.pest"); // relative to this file
@@ -21,22 +24,29 @@ const _GRAMMAR: &'static str = include_str!("logikon.pest"); // relative to this
 #[grammar = "logikon.pest"]
 struct ContractParser;
 
-fn main() {}
+fn file_to_string(path: &str) -> String {
+    let mut file = File::open(path).unwrap();
+    let mut content = String::new();
+    file.read_to_string(&mut content).unwrap();
+    content
+}
+
+fn main() {
+    let source = file_to_string("./examples/hello_world.lk");
+
+    let yul = logikon_compile(&ast::logikon_parse(&source));
+
+    println!("Source in Logikon:");
+    println!("{}", source);
+    println!("\n\nGenerated Yul bytecode:");
+    println!("{}", yul);
+}
 
 #[cfg(test)]
 mod tests {
 
     use super::*;
     use pest::Parser;
-    use std::fs::File;
-    use std::io::prelude::*;
-
-    fn file_to_string(path: &str) -> String {
-        let mut file = File::open(path).unwrap();
-        let mut content = String::new();
-        file.read_to_string(&mut content).unwrap();
-        content
-    }
 
     #[test]
     fn basic_syntax() {
