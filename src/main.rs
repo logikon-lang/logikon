@@ -6,9 +6,6 @@ extern crate colored;
 
 mod z3_interface;
 use codegen::logikon_compile;
-use z3::{Config, Context};
-use z3_interface::Z3Interface;
-
 use colored::*;
 
 mod ast;
@@ -16,13 +13,6 @@ mod codegen;
 
 use std::fs::File;
 use std::io::prelude::*;
-
-#[cfg(debug_assertions)]
-const _GRAMMAR: &'static str = include_str!("logikon.pest"); // relative to this file
-
-#[derive(Parser)]
-#[grammar = "logikon.pest"]
-struct ContractParser;
 
 fn file_to_string(path: &str) -> String {
     let mut file = File::open(path).unwrap();
@@ -47,6 +37,15 @@ mod tests {
 
     use super::*;
     use pest::Parser;
+    use z3::{Config, Context};
+    use z3_interface::z3::Z3Interface;
+
+    #[cfg(debug_assertions)]
+    const _GRAMMAR: &'static str = include_str!("logikon.pest"); // relative to this file
+
+    #[derive(Parser)]
+    #[grammar = "logikon.pest"]
+    struct ContractParser;
 
     #[test]
     fn basic_syntax() {
@@ -71,22 +70,6 @@ mod tests {
                 };
             }
         }
-    }
-
-    #[test]
-    fn visitor() {
-        let source = file_to_string("./examples/syntax.lk");
-
-        let pairs = ContractParser::parse(Rule::contract, &source).unwrap();
-
-        // traverse and print nodes
-
-        //enter parent
-        //enter child 1
-        //exit child 1
-        //enter child 2
-        //exit child2
-        //exit parent
     }
 
     #[test]

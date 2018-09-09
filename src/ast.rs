@@ -233,8 +233,6 @@ impl<'a> Variable {
 
 impl<'a> UintExpression {
     fn from(pair: Pair<Rule>, symbols: &HashMap<String, Type>) -> UintExpression {
-        let mut arg_count = 0;
-
         let mut token_iter = pair.into_inner();
 
         let op = token_iter.next().unwrap();
