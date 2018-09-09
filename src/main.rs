@@ -22,15 +22,14 @@ fn file_to_string(path: &str) -> String {
     content
 }
 
+extern {
+    fn emscripten_exit_with_live_runtime();
+}
+
 fn main() {
-    let source = file_to_string("./examples/hello_world.lk");
-
-    let yul = logikon_compile(&ast::logikon_parse(&source));
-
-    println!("{}", "Source in Logikon:".blue());
-    println!("{}", source.green());
-    println!("{}", "\n\nGenerated Yul bytecode:".blue());
-    println!("{}", yul.green());
+    unsafe {
+        emscripten_exit_with_live_runtime();
+    }
 }
 
 #[cfg(test)]
