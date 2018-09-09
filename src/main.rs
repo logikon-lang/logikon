@@ -6,6 +6,8 @@ extern crate colored;
 
 //mod z3_interface;
 
+use std::os::raw::c_char;
+
 use codegen::logikon_compile;
 use colored::*;
 
@@ -20,6 +22,12 @@ fn file_to_string(path: &str) -> String {
     let mut content = String::new();
     file.read_to_string(&mut content).unwrap();
     content
+}
+
+#[no_mangle]
+pub fn compileStandard(input: *const c_char) -> *const c_char {
+    // FIXME: implement Solidity's compileStandard here
+    panic!(":(")
 }
 
 extern {
