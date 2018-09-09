@@ -139,10 +139,7 @@ impl<'a> Contract {
             }
         }
 
-        Contract {
-            state,
-            functions,
-        }
+        Contract { state, functions }
     }
 }
 
@@ -163,10 +160,7 @@ impl<'a> StateVariable {
             }
         }
 
-        StateVariable {
-            name,
-            _type
-        }
+        StateVariable { name, _type }
     }
 }
 
@@ -201,17 +195,23 @@ impl<'a> Function {
             }
         }
 
-        let cases = cases.iter().map(|c| Case {
-            parameters: c.parameters.iter().enumerate().map(|(index, v)| Variable {
-                _type: inputs[index].clone(),
-                name: v.name.clone(),
-            }).collect(),
-            return_value: Variable {
-                _type: output.clone(),
-                name: c.return_value.name.clone()
-            },
-            expressions: c.expressions.clone()
-        }).collect();
+        let cases = cases
+            .iter()
+            .map(|c| Case {
+                parameters: c
+                    .parameters
+                    .iter()
+                    .enumerate()
+                    .map(|(index, v)| Variable {
+                        _type: inputs[index].clone(),
+                        name: v.name.clone(),
+                    }).collect(),
+                return_value: Variable {
+                    _type: output.clone(),
+                    name: c.return_value.name.clone(),
+                },
+                expressions: c.expressions.clone(),
+            }).collect();
 
         Function {
             name,
@@ -331,7 +331,9 @@ impl<'a> BooleanExpression {
                 let argument = token_iter.next().unwrap();
                 match op.as_str() {
                     "prove" => panic!("NO PROVE"),
-                    "not" => BooleanExpression::Not(Box::new(BooleanExpression::from(argument, &symbols))),
+                    "not" => BooleanExpression::Not(Box::new(BooleanExpression::from(
+                        argument, &symbols,
+                    ))),
                     _ => panic!(""),
                 }
             }
@@ -397,7 +399,10 @@ impl<'a> BooleanExpression {
 impl<'a> Case {
     fn from(pair: Pair<Rule>, symbols: HashMap<String, Type>) -> Case {
         let mut parameters = vec![];
-        let mut return_value = Variable { name: String::new(), _type: Type::Unknown };
+        let mut return_value = Variable {
+            name: String::new(),
+            _type: Type::Unknown,
+        };
         let mut expressions = vec![];
 
         for p in pair.into_inner() {
@@ -426,8 +431,6 @@ impl<'a> Case {
         }
     }
 }
-
-
 
 use pest::iterators::Pair;
 use pest::Parser;
@@ -483,7 +486,10 @@ mod tests {
                 cases: vec![Case {
                     parameters: vec![],
                     expressions: vec![],
-                    return_value: Variable { name: String::from("_"), _type: Type::Uint }
+                    return_value: Variable {
+                        name: String::from("_"),
+                        _type: Type::Uint
+                    }
                 }],
                 signature: Signature {
                     inputs: vec![Type::Uint],
@@ -638,74 +644,79 @@ mod tests {
 
         assert_eq!(
             Contract::from(pair),
-            Contract { functions : vec![Function {
-                name: String::from("min"),
-                recursive: false,
-                cases: vec![Case {
-                    parameters: vec![
-                        Variable {
-                            name: String::from("a"),
-                            _type: Type::Uint
-                        },
-                        Variable {
-                            name: String::from("b"),
-                            _type: Type::Uint
+            Contract {
+                functions: vec![
+                    Function {
+                        name: String::from("min"),
+                        recursive: false,
+                        cases: vec![Case {
+                            parameters: vec![
+                                Variable {
+                                    name: String::from("a"),
+                                    _type: Type::Uint
+                                },
+                                Variable {
+                                    name: String::from("b"),
+                                    _type: Type::Uint
+                                }
+                            ],
+                            expressions: vec![BooleanExpression::EqUint(
+                                Box::new(UintExpression::Identifier(String::from("x"))),
+                                Box::new(UintExpression::Ite(
+                                    Box::new(BooleanExpression::Lt(
+                                        Box::new(UintExpression::Identifier(String::from("a"))),
+                                        Box::new(UintExpression::Identifier(String::from("b")))
+                                    )),
+                                    Box::new(UintExpression::Identifier(String::from("a"))),
+                                    Box::new(UintExpression::Identifier(String::from("b"))),
+                                ))
+                            )],
+                            return_value: Variable {
+                                name: String::from("x"),
+                                _type: Type::Uint
+                            }
+                        }],
+                        signature: Signature {
+                            inputs: vec![Type::Uint, Type::Uint],
+                            output: Type::Uint
                         }
-                    ],
-                    expressions: vec![BooleanExpression::EqUint(
-                        Box::new(UintExpression::Identifier(String::from("x"))),
-                        Box::new(UintExpression::Ite(
-                            Box::new(BooleanExpression::Lt(
-                                Box::new(UintExpression::Identifier(String::from("a"))),
-                                Box::new(UintExpression::Identifier(String::from("b")))
-                            )),
-                            Box::new(UintExpression::Identifier(String::from("a"))),
-                            Box::new(UintExpression::Identifier(String::from("b"))),
-                        ))
-                    )],
-                    return_value: Variable {
-                        name: String::from("x"),
-                        _type: Type::Uint
-                    }
-                }],
-                signature: Signature {
-                    inputs: vec![Type::Uint, Type::Uint],
-                    output: Type::Uint
-                }
-            }, Function {
-                name: String::from("forward"),
-                recursive: false,
-                cases: vec![Case {
-                    parameters: vec![
-                        Variable {
-                            name: String::from("a"),
-                            _type: Type::Uint
-                        },
-                        Variable {
-                            name: String::from("b"),
-                            _type: Type::Uint
+                    },
+                    Function {
+                        name: String::from("forward"),
+                        recursive: false,
+                        cases: vec![Case {
+                            parameters: vec![
+                                Variable {
+                                    name: String::from("a"),
+                                    _type: Type::Uint
+                                },
+                                Variable {
+                                    name: String::from("b"),
+                                    _type: Type::Uint
+                                }
+                            ],
+                            expressions: vec![BooleanExpression::EqUint(
+                                Box::new(UintExpression::Identifier(String::from("x"))),
+                                Box::new(UintExpression::FunctionCall(
+                                    String::from("min"),
+                                    vec![
+                                        UintExpression::Identifier(String::from("a")),
+                                        UintExpression::Identifier(String::from("b")),
+                                    ]
+                                ))
+                            )],
+                            return_value: Variable {
+                                name: String::from("x"),
+                                _type: Type::Uint
+                            }
+                        }],
+                        signature: Signature {
+                            inputs: vec![Type::Uint, Type::Uint],
+                            output: Type::Uint
                         }
-                    ],
-                    expressions: vec![BooleanExpression::EqUint(
-                        Box::new(UintExpression::Identifier(String::from("x"))),
-                        Box::new(UintExpression::FunctionCall(
-                            String::from("min"), vec![
-                                UintExpression::Identifier(String::from("a")),
-                                UintExpression::Identifier(String::from("b")),
-                            ]
-                        ))
-                    )],
-                    return_value: Variable {
-                        name: String::from("x"),
-                        _type: Type::Uint
                     }
-                }],
-                signature: Signature {
-                    inputs: vec![Type::Uint, Type::Uint],
-                    output: Type::Uint
-                }
+                ]
             }
-            ]}
         );
     }
 
@@ -733,7 +744,10 @@ mod tests {
                     cases: vec![Case {
                         parameters: vec![],
                         expressions: vec![],
-                        return_value: Variable { name: String::from("_"), _type: Type::Uint }
+                        return_value: Variable {
+                            name: String::from("_"),
+                            _type: Type::Uint
+                        }
                     }],
                     signature: Signature {
                         inputs: vec![Type::Uint],
