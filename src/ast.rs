@@ -2,33 +2,33 @@ use std::collections::HashMap;
 
 #[derive(Hash, PartialEq, Debug)]
 pub struct Contract {
-    state: Vec<StateVariable>,
-    functions: Vec<Function>,
+    pub state: Vec<StateVariable>,
+    pub functions: Vec<Function>,
 }
 
 #[derive(Hash, PartialEq, Debug)]
-struct StateVariable {
-    name: String,
-    _type: Type,
+pub struct StateVariable {
+    pub name: String,
+    pub _type: Type,
 }
 
 #[derive(Hash, PartialEq, Debug)]
-struct Function {
-    name: String,
-    cases: Vec<Case>,
-    recursive: bool,
-    signature: Signature,
+pub struct Function {
+    pub name: String,
+    pub cases: Vec<Case>,
+    pub recursive: bool,
+    pub signature: Signature,
 }
 
 #[derive(Hash, PartialEq, Debug, Clone)]
-struct Case {
-    parameters: Vec<Variable>, // TODO implement patterns
-    expressions: Vec<BooleanExpression>,
-    return_value: Variable,
+pub struct Case {
+    pub parameters: Vec<Variable>, // TODO implement patterns
+    pub expressions: Vec<BooleanExpression>,
+    pub return_value: Variable,
 }
 
 #[derive(Hash, PartialEq, Debug, Clone)]
-enum BooleanExpression {
+pub enum BooleanExpression {
     Identifier(String),
 
     EqBool(Box<BooleanExpression>, Box<BooleanExpression>),
@@ -53,13 +53,13 @@ enum BooleanExpression {
 }
 
 #[derive(Hash, PartialEq, Debug, Clone)]
-enum Expression {
+pub enum Expression {
     Boolean(BooleanExpression),
     Uint(UintExpression),
 }
 
 #[derive(Hash, PartialEq, Debug, Clone)]
-enum UintExpression {
+pub enum UintExpression {
     Identifier(String),
 
     Plus(Box<UintExpression>, Box<UintExpression>),
@@ -77,7 +77,7 @@ enum UintExpression {
 }
 
 #[derive(Hash, PartialEq, Debug, Clone)]
-enum ArrayExpression {
+pub enum ArrayExpression {
     Identifier(String),
     Store(
         Box<ArrayExpression>,
@@ -87,13 +87,13 @@ enum ArrayExpression {
 }
 
 #[derive(Hash, PartialEq, Debug, Clone)]
-struct Variable {
-    name: String,
-    _type: Type,
+pub struct Variable {
+    pub name: String,
+    pub _type: Type,
 }
 
 #[derive(Hash, PartialEq, Debug, Clone)]
-enum Type {
+pub enum Type {
     Unknown,
     Uint,
     Array,
@@ -102,9 +102,9 @@ enum Type {
 }
 
 #[derive(Hash, PartialEq, Debug)]
-struct Signature {
-    inputs: Vec<Type>,
-    output: Type,
+pub struct Signature {
+    pub inputs: Vec<Type>,
+    pub output: Type,
 }
 
 impl<'a> Type {
@@ -497,7 +497,7 @@ mod tests {
     fn identity_function() {
         let source = r#"define f (Bool) -> Bool 
         case (a) x :-
-            (= x y).
+            (= x a).
     "#;
 
         let mut pairs = ContractParser::parse(Rule::function_def, &source).unwrap();
@@ -516,7 +516,7 @@ mod tests {
                     }],
                     expressions: vec![BooleanExpression::EqBool(
                         Box::new(BooleanExpression::Identifier(String::from("x"))),
-                        Box::new(BooleanExpression::Identifier(String::from("y")))
+                        Box::new(BooleanExpression::Identifier(String::from("a")))
                     )],
                     return_value: Variable {
                         name: String::from("x"),
@@ -748,7 +748,7 @@ mod tests {
     fn public_api() {
         let source = r#"define f (Bool) -> Bool 
         case (a) x :-
-            (= x y).
+            (= x a).
     "#;
 
         let contract = logikon_parse(&String::from(source));
@@ -767,7 +767,7 @@ mod tests {
                         }],
                         expressions: vec![BooleanExpression::EqBool(
                             Box::new(BooleanExpression::Identifier(String::from("x"))),
-                            Box::new(BooleanExpression::Identifier(String::from("y")))
+                            Box::new(BooleanExpression::Identifier(String::from("a")))
                         )],
                         return_value: Variable {
                             name: String::from("x"),

@@ -9,6 +9,7 @@ use z3::{Config, Context};
 use z3_interface::Z3Interface;
 
 mod ast;
+mod codegen;
 
 use pest::Parser;
 use pest::*;
