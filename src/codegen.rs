@@ -4,6 +4,40 @@ use self::yultsur::yul::*;
 
 use ast;
 
+// Insanely not idiomatic rust. Hackathon mode.
+fn get_expression(stmnt: Statement) -> Expression {
+    if let Statement::Expression(exp) = stmnt {
+        return exp;
+    }
+    panic!();
+}
+
+// Insanely not idiomatic rust. Hackathon mode.
+fn get_identifier(exp: Expression) -> Identifier {
+    if let Expression::Identifier(identifier) = exp {
+        return identifier;
+    }
+    panic!();
+}
+
+// Insanely not idiomatic rust. Hackathon mode.
+fn compile_expression(exp: &ast::BooleanExpression) -> Statement {
+    match exp {
+        ast::BooleanExpression::Identifier(identifier) => Statement::Expression(Expression::Identifier(Identifier { identifier: identifier.to_string() })),
+        ast::BooleanExpression::EqBool(left, right) => {
+            let left = get_expression(compile_expression(left));
+            let right = get_expression(compile_expression(right));
+            // Statement::Expression(Expression::FunctionCall(Identifier::new("eq"), vec![left, right]))
+            Statement::Assignment(vec![get_identifier(left)], right)
+        },
+        c => {
+            println!("{:?}", c);
+            Statement::Expression(Expression::Literal(Literal { literal: "1".to_string() }))
+        },
+    }
+}
+
+// Insanely not idiomatic rust. Hackathon mode.
 fn compile_case(name: &str, case: &ast::Case) -> Statement {
     let name:Identifier = Identifier { identifier: name.to_string() };
     let mut parameters:Vec<Identifier> = vec![];
@@ -16,7 +50,9 @@ fn compile_case(name: &str, case: &ast::Case) -> Statement {
 
     returns.push(Identifier { identifier: case.return_value.name.clone() });
 
-    // FIXME: translate case.expressions -> block.statements
+    for expression in &case.expressions {
+        block.statements.push(compile_expression(expression));
+    }
 
     Statement::FunctionDefinition(
         name,
@@ -69,7 +105,7 @@ mod tests {
 
         assert_eq!(
             logikon_compile(&ast::logikon_parse(&source)),
-            "{ { function f_0(a) -> (x) { } } }"
+            "{ { function f_0(a) -> (x) { x := a } } }"
         );
     }
 }
