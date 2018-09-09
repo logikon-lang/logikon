@@ -30,10 +30,7 @@ fn compile_expression(exp: &ast::BooleanExpression) -> Statement {
             // Statement::Expression(Expression::FunctionCall(Identifier::new("eq"), vec![left, right]))
             Statement::Assignment(vec![get_identifier(left)], right)
         },
-        c => {
-            println!("{:?}", c);
-            Statement::Expression(Expression::Literal(Literal { literal: "1".to_string() }))
-        },
+        c => panic!("Unsupported expression."),
     }
 }
 
