@@ -7,5 +7,5 @@ authors = ["Leonardo Alt <leo@ethereum.org>", "Alex Beregszaszi <alex@rtfs.hu>",
 pest = "^1.0"
 pest_derive = "^1.0"
 z3 = "0.2.0"
-yultsur = { git = "https://github.com/axic/yultsur" }
+yultsur = { git = "https://github.com/axic/yultsur", rev = "1c5bf24" }
 colored = "1.6.1"

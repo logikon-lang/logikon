@@ -26,13 +26,14 @@ fn compile_expression(exp: &ast::BooleanExpression) -> Statement {
         ast::BooleanExpression::Identifier(identifier) => {
             Statement::Expression(Expression::Identifier(Identifier {
                 identifier: identifier.to_string(),
+                yultype: None,
             }))
         }
         ast::BooleanExpression::EqBool(left, right) => {
             let left = get_expression(compile_expression(left));
             let right = get_expression(compile_expression(right));
             // Statement::Expression(Expression::FunctionCall(Identifier::new("eq"), vec![left, right]))
-            Statement::Assignment(vec![get_identifier(left)], right)
+            Statement::Assignment(Assignment{ identifiers: vec![get_identifier(left)], expression: right })
         }
         c => panic!("Unsupported expression: {:?}", c),
     }
@@ -42,6 +43,7 @@ fn compile_expression(exp: &ast::BooleanExpression) -> Statement {
 fn compile_case(name: &str, case: &ast::Case) -> Statement {
     let name: Identifier = Identifier {
         identifier: name.to_string(),
+        yultype: None,
     };
     let mut parameters: Vec<Identifier> = vec![];
     let mut returns: Vec<Identifier> = vec![];
@@ -50,18 +52,20 @@ fn compile_case(name: &str, case: &ast::Case) -> Statement {
     for parameter in &case.parameters {
         parameters.push(Identifier {
             identifier: parameter.name.clone(),
+            yultype: None,
         });
     }
 
     returns.push(Identifier {
         identifier: case.return_value.name.clone(),
+        yultype: None,
     });
 
     for expression in &case.expressions {
         block.statements.push(compile_expression(expression));
     }
 
-    Statement::FunctionDefinition(name, parameters, returns, block)
+    Statement::FunctionDefinition(FunctionDefinition{ name, parameters, returns, block })
 }
 
 fn compile_function(function: &ast::Function) -> Statement {
@@ -108,7 +112,7 @@ mod tests {
 
         assert_eq!(
             logikon_compile(&ast::logikon_parse(&source)),
-            "{ { function f_0(a) -> (x) { x := a } } }"
+            "{ { function f_0(a) -> x { x := a } } }"
         );
     }
 }
