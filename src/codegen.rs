@@ -1,3 +1,5 @@
+// NOTE: this assumes "ordered logikon" as an input
+
 extern crate yultsur;
 
 use self::yultsur::yul::*;
@@ -84,6 +86,50 @@ fn compile_function(function: &ast::Function) -> Statement {
 pub fn logikon_compile(contract: &ast::Contract) -> String {
     let mut statements = vec![];
 
+    // Add built in helpers
+    statements.push(Statement::FunctionDefinition(FunctionDefinition {
+        name: Identifier {
+            identifier: "require".to_string(),
+            yultype: None,
+        },
+        parameters: vec![Identifier {
+            identifier: "condition".to_string(),
+            yultype: None,
+        }],
+        returns: vec![],
+        block: Block {
+            statements: vec![
+                Statement::If(If {
+                    expression: Expression::FunctionCall(FunctionCall {
+                        identifier: Identifier {
+                            identifier: "not".to_string(),
+                            yultype: None
+                        },
+                        arguments: vec![Expression::Identifier(Identifier {
+                            identifier: "condition".to_string(),
+                            yultype: None,
+                        })],
+                    }),
+                    block: Block {
+                        statements: vec![Statement::Expression(Expression::FunctionCall(FunctionCall {
+                            identifier: Identifier {
+                                identifier: "revert".to_string(),
+                                yultype: None
+                            },
+                            arguments: vec![Expression::Literal(Literal {
+                                literal: "0".to_string(),
+                                yultype: None,
+                            }), Expression::Literal(Literal {
+                                literal: "0".to_string(),
+                                yultype: None,
+                            })],
+                        }))]
+                    }
+                })
+            ]
+        }
+    }));
+
     for function in &contract.functions {
         statements.push(compile_function(&function))
     }
@@ -101,7 +147,7 @@ mod tests {
     fn smoke() {
         let source = "";
 
-        assert_eq!(logikon_compile(&ast::logikon_parse(&source)), "{ }");
+        assert_eq!(logikon_compile(&ast::logikon_parse(&source)), "{ function require(condition) { if not(condition) { revert(0, 0) } } }");
     }
 
     #[test]
@@ -112,7 +158,7 @@ mod tests {
 
         assert_eq!(
             logikon_compile(&ast::logikon_parse(&source)),
-            "{ { function f_0(a) -> x { x := a } } }"
+            "{ function require(condition) { if not(condition) { revert(0, 0) } } { function f_0(a) -> x { x := a } } }"
         );
     }
 }
