@@ -74,6 +74,8 @@ pub enum UintExpression {
     ),
 
     Select(Box<ArrayExpression>, Box<UintExpression>),
+
+    FunctionCall(String, Vec<Expression>),
 }
 
 #[derive(Hash, PartialEq, Debug, Clone)]
@@ -643,6 +645,7 @@ mod tests {
         assert_eq!(
             Contract::from(pair),
             Contract {
+                state: vec![],
                 functions: vec![
                     Function {
                         name: String::from("min"),
@@ -698,8 +701,8 @@ mod tests {
                                 Box::new(UintExpression::FunctionCall(
                                     String::from("min"),
                                     vec![
-                                        UintExpression::Identifier(String::from("a")),
-                                        UintExpression::Identifier(String::from("b")),
+                                        Expression::Uint(UintExpression::Identifier(String::from("a"))),
+                                        Expression::Uint(UintExpression::Identifier(String::from("b"))),
                                     ]
                                 ))
                             )],
