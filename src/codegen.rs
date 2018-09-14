@@ -31,6 +31,7 @@ fn compile_expression(exp: &ast::BooleanExpression) -> Statement {
                 yultype: None,
             }))
         }
+        // FIXME: insert `require()` statements for most expressions
         ast::BooleanExpression::EqBool(left, right) => {
             let left = get_expression(compile_expression(left));
             let right = get_expression(compile_expression(right));
@@ -74,9 +75,12 @@ fn compile_function(function: &ast::Function) -> Statement {
     let mut statements = vec![];
 
     for (i, case) in function.cases.iter().enumerate() {
+        // Create a Yul function for each case.
         let name = format!("{}_{}", function.name, i);
         statements.push(compile_case(&name, case));
     }
+
+    // FIXME: add ABI encoder piece for each function defined above
 
     Statement::Block(Block {
         statements: statements,
@@ -87,6 +91,8 @@ pub fn logikon_compile(contract: &ast::Contract) -> String {
     let mut statements = vec![];
 
     // Add built in helpers
+
+    // This monster is `function require(condition) { if not(condition) { revert(0, 0) } }`
     statements.push(Statement::FunctionDefinition(FunctionDefinition {
         name: Identifier {
             identifier: "require".to_string(),
