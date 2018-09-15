@@ -22,7 +22,7 @@ array_param = @ { "{" ~ uint_param ~ "}" }
 
 uint_param = @ { identifier  | number }
 
-statement = $ { "(" ~ (ternary_op | function_identifier | unary_op | binary_op) ~ (" " ~ argument)* ~ ")" }
+statement = $ { "(" ~ (ternary_op | unary_op | binary_op | function_identifier ) ~ (" " ~ argument)* ~ ")" }
 
 argument = { statement | number | identifier }
 
